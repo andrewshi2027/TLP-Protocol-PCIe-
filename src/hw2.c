@@ -5,18 +5,6 @@
 
 #include "hw2.h"
 
-// char int_to_bits (int num) {
-//     static char bits[33];
-//     bits[32] = '\0';
-    
-//     for (int i = 31; i >= 0; i--) {
-//         int bit = (num >> i) & 1;
-//         bits[31- i] = bit ? '1' : '0';
-//     }
-//     //printf("%s", bits);
-//     return bits;
-// }
-
 int checkRead (unsigned int packet) {
     if ((packet >> 10) & 0x7FFFF) {
         return 0; //Not read request (if any of the bits are '1')
@@ -41,9 +29,6 @@ void print_packet(unsigned int packet[])
     //char packet_type;
     //int packet_address;
     //int *packet_data;    
-
-    // //Convert Packet to Bits
-    // char* packet_in_bits = int_to_bits(packet);
 
     //Length
     int packet_length = packet[0] & 0x03FF;

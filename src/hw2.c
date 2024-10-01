@@ -5,52 +5,78 @@
 
 #include "hw2.h"
 
-// int checkRead (unsigned int packet[]) {
-//     if ((packet[0] >> 10) & 0x7FFFF) {
-//         return 0; //Not read request (if any of the bits are '1')
-//     }
-//     return 1; //Is a read request
-// }
-
-// int checkWrite (unsigned int packet[]) {
-//     if (((packet[0] >> 31) & 1) == 0 && ((packet[0] >> 30) & 1) == 1 && ((packet[0] >> 10) & 0x7FFFF) == 0) {
-//         return 1; //Is write request
-//     }
-//     return 0; //Not write request
-// }
-
 void print_packet(unsigned int packet[])
 {
     char* packet_type; 
+     //Address
+    int packet_address;
+    //Length
+    int packet_length;
+    //Requester ID
+    int packet_ID;
+    //Tag
+    int packet_tag;
+    //Last BE
+    int packet_Last_BE;
+    //1st BE
+    int packet_First_BE;
 
     //Packet Type
     if (((packet[0] >> 31) & 1) == 0 && ((packet[0] >> 30) & 1) == 1 && ((packet[0] >> 10) & 0x7FFFF) == 0) {
         packet_type = "Write";
+        //Address
+        packet_address = (packet[2]);
+        //Length
+        packet_length = packet[0] & 0x03FF;
+        //Requester ID
+        packet_ID = ((packet[1] >> 16) & 0xFFFF);
+        //Tag
+        packet_tag = ((packet[1] >> 8) & 0x00FF);
+        //Last BE
+        packet_Last_BE = ((packet[1] >> 4) & 0x000F);
+        //1st BE
+        packet_First_BE = ((packet[1] & 0x000F));
+        //Data
+        //Data N
     }
     else if (!((packet[0] >> 10) & 0x7FFFF)) {
         packet_type = "Read";
+        //Address
+        packet_address = (packet[2]);
+        //Length
+        packet_length = packet[0] & 0x03FF;
+        //Requester ID
+        packet_ID = ((packet[1] >> 16) & 0xFFFF);
+        //Tag
+        packet_tag = ((packet[1] >> 8) & 0x00FF);
+        //Last BE
+        packet_Last_BE = ((packet[1] >> 4) & 0x000F);
+        //1st BE
+        packet_First_BE = ((packet[1] & 0x000F));
     }
 
-    //Address
-    int packet_address = (packet[2]);
+    // //Address
+    // int packet_address = (packet[2]);
 
-    //Length
-    int packet_length = packet[0] & 0x03FF;
+    // //Length
+    // int packet_length = packet[0] & 0x03FF;
 
-    //Requester ID 
-    int packet_ID = ((packet[1] >> 16) & 0xFFFF);
+    // //Requester ID 
+    // int packet_ID = ((packet[1] >> 16) & 0xFFFF);
 
-    //Tag
-    int packet_tag = ((packet[1] >> 8) & 0x00FF);
+    // //Tag
+    // int packet_tag = ((packet[1] >> 8) & 0x00FF);
 
-    //Last BE
-    int packet_Last_BE = ((packet[1] >> 4) & 0x000F);
+    // //Last BE
+    // int packet_Last_BE = ((packet[1] >> 4) & 0x000F);
 
-    //1st BE
-    int packet_First_BE = ((packet[1] & 0x000F));
+    // //1st BE
+    // int packet_First_BE = ((packet[1] & 0x000F));
 
     //Data
-    int packet_data = packet[3];
+    //int packet_data = packet[3];
+
+    //Data N
 
 
     printf("Packet Type: %s\n", packet_type);
@@ -60,7 +86,8 @@ void print_packet(unsigned int packet[])
     printf("Tag: %d\n", packet_tag);
     printf("Last BE: %d\n", packet_Last_BE);
     printf("1st BE: %d\n", packet_First_BE);
-    printf("Data: %d\n", packet_data);
+    //printf("Data: %d\n", packet_data);
+    //printf("Data: %d\n", packet_data_N);
 
     (void) packet;
 }

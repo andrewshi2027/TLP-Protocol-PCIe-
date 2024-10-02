@@ -20,8 +20,6 @@ void print_packet(unsigned int packet[])
     int packet_Last_BE;
     //1st BE
     int packet_First_BE;
-    //Data
-    unsigned int* packet_data;
 
     //Packet Type
     //Write
@@ -39,9 +37,18 @@ void print_packet(unsigned int packet[])
         packet_Last_BE = ((packet[1] >> 4) & 0x000F);
         //1st BE
         packet_First_BE = ((packet[1] & 0x000F));
-        //Data
-        packet_data = &packet[3];
-        //Data N
+
+        printf("Packet Type: %s\n", packet_type);
+        printf("Address: %d\n", packet_address);
+        printf("Length: %d\n", packet_length);
+        printf("Requester ID: %d\n", packet_ID);
+        printf("Tag: %d\n", packet_tag);
+        printf("Last BE: %d\n", packet_Last_BE);
+        printf("1st BE: %d\n", packet_First_BE);
+        printf("Data: ");
+        for (int i = 3; i < packet_length + 3; i++) {
+            printf("%d ", packet[i]);
+        }
     }
     //Read
     else if (!((packet[0] >> 10) & 0x7FFFF)) {
@@ -58,22 +65,18 @@ void print_packet(unsigned int packet[])
         packet_Last_BE = ((packet[1] >> 4) & 0x000F);
         //1st BE
         packet_First_BE = ((packet[1] & 0x000F));
+
+        printf("Packet Type: %s\n", packet_type);
+        printf("Address: %d\n", packet_address);
+        printf("Length: %d\n", packet_length);
+        printf("Requester ID: %d\n", packet_ID);
+        printf("Tag: %d\n", packet_tag);
+        printf("Last BE: %d\n", packet_Last_BE);
+        printf("1st BE: %d\n", packet_First_BE);
     } 
     else {
         packet_type = "Unknown";
     }
-
-
-
-
-    printf("Packet Type: %s\n", packet_type);
-    printf("Address: %d\n", packet_address);
-    printf("Length: %d\n", packet_length);
-    printf("Requester ID: %d\n", packet_ID);
-    printf("Tag: %d\n", packet_tag);
-    printf("Last BE: %d\n", packet_Last_BE);
-    printf("1st BE: %d\n", packet_First_BE);
-    printf("Data: ");
 
     (void) packet;
 }

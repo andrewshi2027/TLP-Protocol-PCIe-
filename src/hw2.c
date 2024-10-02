@@ -49,6 +49,7 @@ void print_packet(unsigned int packet[])
         for (int i = 3; i < packet_length + 3; i++) {
             printf("%d ", packet[i]);
         }
+        printf("\n");
     }
     //Read
     else if (!((packet[0] >> 10) & 0x7FFFF)) {

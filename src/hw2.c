@@ -74,6 +74,7 @@ void print_packet(unsigned int packet[])
         printf("Tag: %d\n", packet_tag);
         printf("Last BE: %d\n", packet_Last_BE);
         printf("1st BE: %d\n", packet_First_BE);
+        printf("Data: \n");
     } 
     else {
         packet_type = "Unknown";

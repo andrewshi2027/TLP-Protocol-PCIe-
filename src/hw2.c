@@ -85,6 +85,35 @@ void print_packet(unsigned int packet[])
 
 void store_values(unsigned int packets[], char *memory)
 {
+    //  //Address
+    // int packet_address;
+    // //Length
+    // int packet_length;
+    // //Last BE
+    // int packet_Last_BE;
+    // //1st BE
+    // int packet_First_BE;
+
+    // unsigned int packet[] = {0};
+    int i = 0;
+    
+    //Determine if packet is Write Request
+    if (((packets[i] >> 31) & 1) == 0 && ((packets[i] >> 30) & 1) == 1 && ((packets[i] >> 10) & 0x7FFFF) == 0) {
+        // //Address
+        // packet_address = (packets[i+2]);
+        // //Length
+        // packet_length = packets[i] & 0x03FF;
+        // //Last BE
+        // packet_Last_BE = ((packets[i+1] >> 4) & 0x000F);
+        // //1st BE
+        // packet_First_BE = ((packets[i+1] & 0x000F));
+
+        //Based on BE, if the byte is "1", extract it
+        //memory[address], address depends on which byte you extract, address + difference to byte
+    }
+
+    //i += packet_length + 3;
+    
     (void)packets;
     (void)memory;
 }

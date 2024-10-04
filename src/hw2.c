@@ -85,57 +85,89 @@ void print_packet(unsigned int packet[])
 
 void store_values(unsigned int packets[], char *memory)
 {
-    // int i = 0;
-    // while (1) {
-    //     //If packet is NOT a Write Request
-    //     if (((packets[i] >> 31) & 1) == 0 && ((packets[i] >> 30) & 1) == 1 && ((packets[i] >> 10) & 0x7FFFF) == 0) {
-    //         break;
-    //     }
+    int i = 0;
+    //If packet is a Write Request
+    while (((packets[i] >> 31) & 1) == 0 && ((packets[i] >> 30) & 1) == 1 && ((packets[i] >> 10) & 0x7FFFF) == 0) {
+        //packets[i] >> 10 == 0x100000
 
-    //     //Address
-    //     unsigned int packet_address = (packets[i+2]);
-    //     //Length
-    //     unsigned int packet_length = packets[i] & 0x03FF;
-    //     //Last BE
-    //     unsigned int packet_Last_BE = ((packets[i+1] >> 4) & 0x000F);
-    //     //1st BE
-    //     unsigned int packet_First_BE = ((packets[i+1] & 0x000F));
+        //Address
+        unsigned int packet_address = (packets[i+2]);
+        //Length
+        unsigned int packet_length = packets[i] & 0x03FF;
+        //Last BE
+        unsigned int packet_Last_BE = ((packets[i+1] >> 4) & 0x000F);
+        //1st BE
+        unsigned int packet_First_BE = ((packets[i+1] & 0x000F));
 
-    //     //Based on BE, if the byte is "1", extract it
-    //     //memory[address], address depends on which byte you extract, address + difference to byte
+        if (packet_address > 0x100000) {
+            i += (3 + packet_length);
+            continue;
+        }
 
-    //     if (packet_address > 0x100000) {
-    //         i += (3 + packet_length);
-    //     }
+        //Data elements
+        for (unsigned int j = 0; j < packet_length; j++) {
+            if (j == 0) { //first word/data, activate First BE
+                //Byte 0
+                if (packet_First_BE & 0x1) { 
+                    memory[packet_address] = (packets[i+3+j] & 0xFF);
+                }
+                packet_address++;
+                //Byte 1
+                if (packet_First_BE & 0x2) {
+                    memory[packet_address] = (packets[i+3+j] >> 8) & 0xFF;
+                }
+                packet_address++; 
+                //Byte 2
+                if (packet_First_BE & 0x4) {
+                    memory[packet_address] = (packets[i+3+j] >> 16) & 0xFF;
+                }
+                packet_address++;
+                //Byte 3
+                if (packet_First_BE & 0x8) {
+                    memory[packet_address] = (packets[i+3+j] >> 24) & 0xFF;
+                }
+                packet_address++;
+            }
+        
+            else if (j == packet_length - 1) { //Last word/data, activate Last BE
+                //Byte 0
+                if (packet_Last_BE & 0x1) { 
+                    memory[packet_address] = (packets[i+3+j] & 0xFF);
+                }
+                packet_address++;
+                //Byte 1
+                if (packet_Last_BE & 0x2) {
+                    memory[packet_address] = (packets[i+3+j] >> 8) & 0xFF;
+                }
+                packet_address++;
+                //Byte 2
+                if (packet_Last_BE & 0x4) {
+                    memory[packet_address] = (packets[i+3+j] >> 16) & 0xFF;
+                }
+                packet_address++;
+                //Byte 3
+                if (packet_Last_BE & 0x8) {
+                    memory[packet_address] = (packets[i+3+j] >> 24) & 0xFF;
+                }
+                packet_address++;
+            }
 
-    //     //Data elements
-    //     for (int j = 0; j < packet_length; j++) {
-    //         if (j == 0) {
-    //             if (packet_First_BE & 0x1) {//address++
-    //                 memory[packet_address] = (packets[i] & 0xFF);
-    //             }
-    //             else {
-    //                 packet_address++;
-    //             }
-    //             if (packet_First_BE & 0x2) {
-    //                 memory[packet_address + 1] = (packets[i] >> 8) & 0xFF;
-    //             }
-    //             if (packet_First_BE & 0x4) {
-    //                 memory[packet_address + 2] = (packets[i] >> 16) & 0xFF;
-    //             }
-    //             if (packet_First_BE & 0x8) {
-    //                 memory[packet_address + 3] = (packets[i] >> 24) & 0xFF;
-    //             }
-
-    //         }
-    //     }
-
-    //     i += packet_length + 3;
-    
+            else {
+                //Byte 0
+                memory[packet_address++] = (packets[i+3+j] & 0xFF);
+                //Byte 1
+                memory[packet_address++] = (packets[i+3+j] >> 8) & 0xFF;
+                //Byte 2
+                memory[packet_address++] = (packets[i+3+j] >> 16) & 0xFF;
+                //Byte 3
+                memory[packet_address++] = (packets[i+3+j] >> 24) & 0xFF;
+            }
+        }
+    i += packet_length + 3;
+    }
     (void)packets;
-    (void)memory;
+    (void)memory; 
 }
-
 unsigned int* create_completion(unsigned int packets[], const char *memory)
 {
     (void)packets;

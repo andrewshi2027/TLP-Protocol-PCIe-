@@ -215,11 +215,6 @@ unsigned int* create_completion(unsigned int packets[], const char *memory)
         if (address >= 0x4000) 
         {
             first_length = (0x4000 - (packet_address % 0x4000))/4;
-
-            if (first_length < 0) {
-                first_length *= 1;
-            }
-
             completion_packets[index] = first_length;
         }
         else {
@@ -310,13 +305,9 @@ unsigned int* create_completion(unsigned int packets[], const char *memory)
                 packet_memory << = (mem_place * 8);
                 completion_packets[index] |= packet_memory;
                 mem_place++;
-            }
-            
+            }       
         }
-
     }
-
-
     return completion_packets;
 }
 

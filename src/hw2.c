@@ -88,7 +88,6 @@ void store_values(unsigned int packets[], char *memory)
     int i = 0;
     //If packet is a Write Request
     while (((packets[i] >> 31) & 1) == 0 && ((packets[i] >> 30) & 1) == 1 && ((packets[i] >> 10) & 0x7FFFF) == 0) {
-        //packets[i] >> 10 == 0x100000
 
         //Address
         unsigned int packet_address = (packets[i+2]);
@@ -168,9 +167,71 @@ void store_values(unsigned int packets[], char *memory)
     (void)packets;
     (void)memory; 
 }
+
 unsigned int* create_completion(unsigned int packets[], const char *memory)
 {
-    (void)packets;
-    (void)memory;
-	return NULL;
+    int i = 0;
+    unsigned int size = 0;
+
+    //If packet is Read Request
+    while (!((packets[i] >> 10) & 0x7FFFF)) {
+        int packet_length = packets[i] & 0x03FF;
+        int packet_address = (packets[i+2]);
+        int address = (packet_address % 0x4000) + (packet_length * 4);
+
+        //Determine size of completion packets
+        if (address > 0x4000) {
+            size += 6 + packet_length;
+        }
+        else {
+            size += 3 + packet_length;
+        }
+        i += 3;
+    }
+
+    i = 0;
+
+    int index = 0;
+
+    //Malloc space for Completion Packets
+    unsigned int* completion_packets = (unsigned int*)malloc(size * sizeof(unsigned int));
+
+    if (completion_packets == NULL) {
+        return NULL;
+    }
+
+    //Packet is a Read Request
+    while (!((packets[i] >> 10) & 0x7FFFF)) {
+        int packet_length = packets[i] & 0x03FF;
+        int packet_address = packets[i + 2];
+        int requester_ID = (packets[i + 1] >> 16) & 0xFFFF;
+        int packet_tag = (packets[i + 1] >> 8) & 0x00FF;
+        int address = (packet_address % 0x4000) + (packet_length * 4);
+        
+        //Create First Completion
+        int first_length = 0;
+        if (address >= 0x4000) {
+            first_length = (0x4000 - (packet_address % 0x4000))/4;
+            if (first_length < 0) {
+                first_length *= 1;
+            }
+
+            completion_packets[index] = first_length;
+        }
+        else {
+            completion_packets[index] = packet_length;
+        }
+
+        completion_packets[index] |= 0x4A000000;
+
+        //Completer ID and ByteCount
+        completion_packets[index+1] = (220 << 16) | (packet_length * 4);
+
+        //Requester ID, Tag and LowerAddress
+        completion_packets[index+2] = (requester_ID << 16) | (packet_tag << 8) | (packet_address & 0x7F);
+
+        index += 3;
+    }   
+	return completion_packets;
 }
+

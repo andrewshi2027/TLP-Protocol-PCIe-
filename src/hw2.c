@@ -263,7 +263,7 @@ unsigned int* create_completion(unsigned int packets[], const char *memory)
             completion_packets[index++] |= 0x4A000000;
             completion_packets[index] = (220 << 16);
             completion_packets[index++] |= second_length * 4;
-            completion_packets[index] == (requester_ID << 16);
+            completion_packets[index] = (requester_ID << 16);
             completion_packets[index++] |= (packet_tag << 8);
             
             mem_place = 0;

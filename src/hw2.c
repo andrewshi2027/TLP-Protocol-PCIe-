@@ -174,7 +174,8 @@ unsigned int* create_completion(unsigned int packets[], const char *memory)
     unsigned int size = 0;
 
     //If packet is Read Request
-    while (!((packets[i] >> 10) & 0x7FFFF)) {
+    while (!((packets[i] >> 10) & 0x7FFFF)) 
+    {
         int packet_length = packets[i] & 0x03FF;
         int packet_address = (packets[i+2]);
         int address = (packet_address % 0x4000) + (packet_length * 4);
@@ -201,7 +202,8 @@ unsigned int* create_completion(unsigned int packets[], const char *memory)
     }
 
     //Packet is a Read Request
-    while (!((packets[i] >> 10) & 0x7FFFF)) {
+    while (!((packets[i] >> 10) & 0x7FFFF)) 
+    {
         int packet_length = packets[i] & 0x03FF;
         int packet_address = packets[i + 2];
         int requester_ID = (packets[i + 1] >> 16) & 0xFFFF;
@@ -210,8 +212,10 @@ unsigned int* create_completion(unsigned int packets[], const char *memory)
         
         //Create First Completion
         int first_length = 0;
-        if (address >= 0x4000) {
+        if (address >= 0x4000) 
+        {
             first_length = (0x4000 - (packet_address % 0x4000))/4;
+
             if (first_length < 0) {
                 first_length *= 1;
             }
@@ -231,7 +235,89 @@ unsigned int* create_completion(unsigned int packets[], const char *memory)
         completion_packets[index+2] = (requester_ID << 16) | (packet_tag << 8) | (packet_address & 0x7F);
 
         index += 3;
-    }   
-	return completion_packets;
+       
+        int mem_place = 0;
+
+        //Split into two Completion Packets
+        if (address >= 0x4000) {
+            mem_place = 0;
+            completion_packets[index] &= 0;
+
+            for (int i = packet_address % 0x4000; i < 0x4000; i++) {
+                if (mem_place == 4) {
+                    mem_place = 0;
+                    index++;
+                    completion_packets[index] &= 0;
+                }
+
+                unsigned int packet_memory = memory[packet_address++];
+                packet_memory &= 0xFF;
+                packet_memory <<= (mem_place * 8);
+                completion_packets[index] |= packet_memory;
+
+                mem_place++;
+            }     
+            index++;
+
+
+            //Create the Second Packet
+            int second_length = packet_length - first_length;
+            completion_packets[index] &= 0;
+            completion_packets[index] = second_length;
+            completion_packets[index] |= 0x4A000000;
+            index++;
+            completion_packets[index] = (220 << 16) | second_length * 4);
+            index++;
+            completion_packets[index] == (requester_ID << 16) | (packet_tag << 8) | (0);
+            index++;
+
+            completion_packets[index] &= 0;
+            mem_place = 0;
+
+            for (int i = packet_address % 0x4000; i < 0x4000; i++) 
+            {
+                if (mem_place == 4) {
+                    mem_place = 0;
+                    index++;
+                    completion_packets[index] &= 0;
+                }
+                unsigned int packet_memory = memory[packet_address++];
+
+                packet_memory &= 0xFF;
+                packet_memory <<= (mem_place * 8);
+                completion_packets[index] |= packet_memory;
+                mem_place++;
+            
+                index++;
+            }
+        }   
+        else {
+            //One Completion Packet
+            int mem_place = 0;
+            completion_packets[index] &= 0;
+
+            for (int i = packet_address; i < (packet_address = packet_length * 4); i++) 
+            {
+                if (mem_place == 4) 
+                {
+                    mem_place = 0;
+                    index++;
+                    completion_packets[index] &= 0;
+                }
+                unsigned int packet_memory = memory[i];
+                
+                packet_memory &= 0xFF;
+                packet_memory << = (mem_place * 8);
+                completion_packets[index] |= packet_memory;
+                mem_place++;
+            }
+            
+        }
+
+    }
+
+
+    return completion_packets;
 }
+
 

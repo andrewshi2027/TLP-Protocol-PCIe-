@@ -176,9 +176,11 @@ unsigned int* create_completion(unsigned int packets[], const char *memory)
     //If packet is Read Request
     while (!((packets[packet_index] >> 10) & 0x7FFFF)) 
     {
-        int packet_length = packets[packet_index++] & 0x03FF;
+        int packet_length = packets[packet_index] & 0x03FF; 
         packet_index++;
-        int packet_address = (packets[packet_index++]);
+        packet_index++;
+        int packet_address = (packets[packet_index]);
+        
         int address = (packet_address % 0x4000) + (packet_length * 4);
 
         //Determine size of completion packets
@@ -191,20 +193,22 @@ unsigned int* create_completion(unsigned int packets[], const char *memory)
             complete_size += no_split;
         }
         packet_index++;
+        
          
     }
-
+    printf("THE SIZE is %d", complete_size);
     packet_index = 0;
 
     int complete_index = 0;
 
     //Malloc space for Completion Packets
-    unsigned int* completion_packets = (unsigned int*)malloc(complete_size * sizeof(unsigned int));
+    unsigned int* completion_packets = malloc(complete_size * sizeof(unsigned int));
 
     //Packet is a Read Request
     while (!((packets[packet_index] >> 10) & 0x7FFFF)) 
     {
         int packet_length = packets[packet_index++] & 0x03FF;
+        printf("the LENGTH %d", packet_length);
         int requester_ID = (packets[packet_index] >> 16) & 0xFFFF;
         int packet_tag = (packets[packet_index++] >> 8) & 0x00FF;
         int packet_address = packets[packet_index];
@@ -244,7 +248,9 @@ unsigned int* create_completion(unsigned int packets[], const char *memory)
                 unsigned int packet_memory = memory[packet_address++];
 
                 packet_memory &= 0xFF;
+                
                 packet_memory <<= (mem_place * 8);
+                
                 completion_packets[complete_index] |= packet_memory;
                 mem_place++;
                 
@@ -289,7 +295,7 @@ unsigned int* create_completion(unsigned int packets[], const char *memory)
         }   
         else {
             mem_place = 0;
-
+            completion_packets[complete_index] &= 0;
             for (int i = packet_address; i < (packet_address + packet_length * 4); i++) 
             {
                 if (mem_place == 4) 

@@ -190,6 +190,7 @@ unsigned int* create_completion(unsigned int packets[], const char *memory)
             int no_split = 3 + packet_length;
             complete_size += no_split;
         }
+        packet_index++;
          
     }
 
@@ -302,8 +303,10 @@ unsigned int* create_completion(unsigned int packets[], const char *memory)
                     completion_packets[complete_index] &= 0;
                 }
                 
-            }       
+            }    
+            complete_index++;   
         }
+        packet_index += 3;
     }
     return completion_packets;
 }

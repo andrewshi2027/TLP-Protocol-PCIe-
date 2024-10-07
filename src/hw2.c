@@ -204,10 +204,10 @@ unsigned int* create_completion(unsigned int packets[], const char *memory)
     //Packet is a Read Request
     while (!((packets[packet_index] >> 10) & 0x7FFFF)) 
     {
-        int packet_length = packets[packet_index] & 0x03FF;
-        int packet_address = packets[packet_index + 2];
-        int requester_ID = (packets[packet_index + 1] >> 16) & 0xFFFF;
-        int packet_tag = (packets[packet_index + 1] >> 8) & 0x00FF;
+        int packet_length = packets[packet_index++] & 0x03FF;
+        int requester_ID = (packets[packet_index] >> 16) & 0xFFFF;
+        int packet_tag = (packets[packet_index++] >> 8) & 0x00FF;
+        int packet_address = packets[packet_index];
         int address = (packet_address % 0x4000) + (packet_length * 4);
         
         //Create First Completion
@@ -221,14 +221,13 @@ unsigned int* create_completion(unsigned int packets[], const char *memory)
             completion_packets[complete_index] = packet_length;
         }
 
-        completion_packets[complete_index] = first_packet_length;
-        completion_packets[complete_index++] |= ((0x4A) << 24);
-        completion_packets[complete_index] = (220 << 16);
-        completion_packets[complete_index++] |= first_packet_length * 4;
-        completion_packets[complete_index] = (requester_ID << 16);
-        completion_packets[complete_index] |= (packet_tag << 8);
-        completion_packets[complete_index] |= packet_address & 0x7F;
-        complete_index++;
+        completion_packets[complete_index++] |= ((0x4A) << 24); //Complete Field at 1
+        completion_packets[complete_index] = (220 << 16); //Completer ID at 2
+        completion_packets[complete_index++] |= packet_length * 4; //Byte Count at 2
+        completion_packets[complete_index] = (requester_ID << 16); //Requester ID at 3
+        completion_packets[complete_index] |= (packet_tag << 8); //Tag at 3
+        completion_packets[complete_index] |= packet_address & 0x7F; //Address at 3
+        complete_index++; //Increment
        
         int mem_place = 0;
 
@@ -237,6 +236,11 @@ unsigned int* create_completion(unsigned int packets[], const char *memory)
             mem_place = 0;
             
             for (int i = packet_address % 0x4000; i < 0x4000; i++) {
+                if (mem_place == 4) {
+                    mem_place = 0;
+                    complete_index++;
+                    completion_packets[complete_index] &= 0;
+                }
                 unsigned int packet_memory = memory[packet_address++];
 
                 packet_memory &= 0xFF;
@@ -244,12 +248,8 @@ unsigned int* create_completion(unsigned int packets[], const char *memory)
                 completion_packets[complete_index] |= packet_memory;
                 mem_place++;
                 
-                if (mem_place == 3) {
-                    mem_place = 0;
-                    complete_index++;
-                    completion_packets[complete_index] &= 0;
-                }
-                complete_index++;
+                
+            
             
             }     
             complete_index++;
@@ -258,17 +258,23 @@ unsigned int* create_completion(unsigned int packets[], const char *memory)
             //Create the Second Packet
             int second_length = packet_length - first_packet_length;
  
-            completion_packets[complete_index] = second_length;
-            completion_packets[complete_index++] |= 0x4A000000;
-            completion_packets[complete_index] = (220 << 16);
-            completion_packets[complete_index++] |= second_length * 4;
-            completion_packets[complete_index] = (requester_ID << 16);
-            completion_packets[complete_index++] |= (packet_tag << 8);
+            completion_packets[complete_index] = second_length; //length at 1
+            completion_packets[complete_index++] |= ((0x4A) << 24); //Complete field at 1
+            completion_packets[complete_index] = (220 << 16); //complete at 2
+            completion_packets[complete_index++] |= second_length * 4; //byte count
+            completion_packets[complete_index] = (requester_ID << 16); //request id at 3
+            completion_packets[complete_index++] |= (packet_tag << 8); //tag at 3
             
             mem_place = 0;
 
-            for (int i = packet_address % 0x4000; i < 0x4000; i++) 
+            for (int i = 0x4000; i < 0x4000 + second_length *4; i++) 
             {
+                if (mem_place == 4) 
+                {
+                    mem_place = 0;
+                    complete_index++;
+                    completion_packets[complete_index] &= 0;
+                }
                 unsigned int packet_memory = memory[packet_address++];
 
                 packet_memory &= 0xFF;
@@ -276,19 +282,22 @@ unsigned int* create_completion(unsigned int packets[], const char *memory)
                 completion_packets[complete_index] |= packet_memory;
                 mem_place++;
                 
-                if (mem_place == 3) {
-                    mem_place = 0;
-                    complete_index++;
-                    completion_packets[complete_index] &= 0;
-                }
-                complete_index++;
+                
+                
             }
+            complete_index++;
         }   
         else {
             mem_place = 0;
 
-            for (int i = packet_address; i < (packet_address = packet_length * 4); i++) 
+            for (int i = packet_address; i < (packet_address + packet_length * 4); i++) 
             {
+                if (mem_place == 4) 
+                {
+                    mem_place = 0;
+                    complete_index++;
+                    completion_packets[complete_index] &= 0;
+                }
                 
                 unsigned int packet_memory = memory[i];
                 
@@ -296,19 +305,12 @@ unsigned int* create_completion(unsigned int packets[], const char *memory)
                 packet_memory <<= (mem_place * 8);
                 completion_packets[complete_index] |= packet_memory;
                 mem_place++;
-                if (mem_place == 3) 
-                {
-                    mem_place = 0;
-                    complete_index++;
-                    completion_packets[complete_index] &= 0;
-                }
+                
                 
             }    
             complete_index++;   
         }
-        packet_index += 3;
+        packet_index ++;
     }
     return completion_packets;
 }
-
-
